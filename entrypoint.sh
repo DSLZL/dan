@@ -3,7 +3,7 @@ set -e
 
 CONFIG_FILE="/app/dan-runtime/config/web_config.json"
 
-# 如果环境变量存在且不为空，则使用 jq 更新配置文件
+# 如果环境变量存在且不为空，就用 jq 更新配置文件
 if [ -n "${PORT:-}" ]; then
     jq --argjson p "$PORT" '.port = $p' "$CONFIG_FILE" > tmp.json && mv tmp.json "$CONFIG_FILE"
 fi
@@ -33,7 +33,5 @@ if [ -n "${DEFAULT_PROXY:-}" ]; then
 fi
 
 echo "Configuration updated. Starting dan-web..."
-# 切换到工作目录并前台启动二进制文件
-# 注意：必须使用 exec，这样二进制进程才能替代 bash 成为 PID 1，接收 docker stop 的信号
 cd /app/dan-runtime
 exec ./dan-web
