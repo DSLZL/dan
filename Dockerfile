@@ -1,24 +1,23 @@
+# 固定基础镜像版本，是 Docker 官方推荐的做法【turn5fetch0】
 FROM debian:bookworm-slim
 
-# 安装依赖：curl用于构建时下载，jq用于运行时动态修改JSON
+# 安装依赖：构建时用 curl；运行时用 jq 来改 JSON 配置
 RUN apt-get update && apt-get install -y curl jq ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# 将你的脚本拷贝进来
-COPY install.sh .
-RUN chmod +x install.sh
+# 这里把远程 install.sh 下载到本地并执行，完成构建阶段（下载 dan-web、生成默认配置）
+ARG INSTALL_SH_URL=https://raw.githubusercontent.com/uton88/dan-binary-releases/refs/heads/main/install.sh
 
-# 【构建阶段】执行脚本，仅下载二进制文件和生成默认配置
-# 不要加 --systemd 和 --background
-RUN ./install.sh --install-dir /app/dan-runtime
+RUN set -eux; \
+    curl -fsSL "${INSTALL_SH_URL}" -o install.sh && \
+    chmod +x install.sh && \
+    ./install.sh --install-dir /app/dan-runtime
 
-# 拷贝我们的启动脚本
+# 拷贝启动脚本（entrypoint.sh）
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# 暴露端口
 EXPOSE 25666
 
-# 设置入口
 ENTRYPOINT ["/app/entrypoint.sh"]
